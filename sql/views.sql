@@ -151,40 +151,98 @@ GROUP BY sr.season_year, sr.season, sr.club_id, c.name;
 
 -- Season totals and per-90 rates for every player at every club.
 -- A player who moved clubs mid-season gets one row per club.
+--
+-- Penalties come from match_events. We assume ESPN counts a penalty as a shot
+-- (and a scored or saved one as on target), so the non-penalty columns take
+-- them back out.
 CREATE VIEW v_player_season_stats AS
+WITH penalties AS (
+    SELECT
+        m.season_id,
+        e.player_id,
+        e.club_id,
+        COUNT(*) FILTER (WHERE e.event_type = 'penalty_goal')                      AS penalty_goals,
+        COUNT(*)                                                                   AS penalty_attempts,
+        COUNT(*) FILTER (WHERE e.event_type IN ('penalty_goal', 'penalty_saved'))  AS penalties_on_target
+    FROM match_events e
+    JOIN matches m ON m.match_id = e.match_id
+    WHERE e.event_type IN ('penalty_goal', 'penalty_saved', 'penalty_missed')
+    GROUP BY m.season_id, e.player_id, e.club_id
+),
+totals AS (
+    SELECT
+        m.season_id,
+        pms.player_id,
+        pms.club_id,
+        MODE() WITHIN GROUP (ORDER BY pms.position_group)    AS position_group,
+        COUNT(*)                                             AS appearances,
+        COUNT(*) FILTER (WHERE pms.is_starter)               AS starts,
+        SUM(pms.minutes_played)                              AS minutes,
+        SUM(pms.goals)                                       AS goals,
+        SUM(pms.assists)                                     AS assists,
+        SUM(pms.shots)                                       AS shots,
+        SUM(pms.shots_on_target)                             AS shots_on_target,
+        SUM(pms.fouls_committed)                             AS fouls_committed,
+        SUM(pms.fouls_suffered)                              AS fouls_suffered,
+        SUM(pms.yellow_cards)                                AS yellow_cards,
+        SUM(pms.red_cards)                                   AS red_cards,
+        SUM(pms.saves)                                       AS saves,
+        SUM(pms.goals_conceded)                              AS goals_conceded,
+        SUM(pms.shots_faced)                                 AS shots_faced
+    FROM player_match_stats pms
+    JOIN matches m ON m.match_id = pms.match_id
+    GROUP BY m.season_id, pms.player_id, pms.club_id
+),
+combined AS (
+    SELECT
+        t.*,
+        COALESCE(pen.penalty_goals, 0)                               AS penalty_goals,
+        COALESCE(pen.penalty_attempts, 0)                            AS penalty_attempts,
+        t.goals - COALESCE(pen.penalty_goals, 0)                     AS non_penalty_goals,
+        t.shots - COALESCE(pen.penalty_attempts, 0)                  AS non_penalty_shots,
+        t.shots_on_target - COALESCE(pen.penalties_on_target, 0)     AS non_penalty_shots_on_target
+    FROM totals t
+    LEFT JOIN penalties pen
+        ON pen.season_id = t.season_id AND pen.player_id = t.player_id AND pen.club_id = t.club_id
+)
 SELECT
-    s.start_year                                         AS season_year,
-    s.label                                              AS season,
-    pms.player_id,
-    p.full_name                                          AS player_name,
-    pms.club_id,
-    c.name                                               AS club_name,
-    MODE() WITHIN GROUP (ORDER BY pms.position_group)    AS position_group,
-    COUNT(*)                                             AS appearances,
-    COUNT(*) FILTER (WHERE pms.is_starter)               AS starts,
-    SUM(pms.minutes_played)                              AS minutes,
-    SUM(pms.goals)                                       AS goals,
-    SUM(pms.assists)                                     AS assists,
-    SUM(pms.shots)                                       AS shots,
-    SUM(pms.shots_on_target)                             AS shots_on_target,
-    SUM(pms.fouls_committed)                             AS fouls_committed,
-    SUM(pms.fouls_suffered)                              AS fouls_suffered,
-    SUM(pms.yellow_cards)                                AS yellow_cards,
-    SUM(pms.red_cards)                                   AS red_cards,
-    SUM(pms.saves)                                       AS saves,
-    SUM(pms.goals_conceded)                              AS goals_conceded,
-    SUM(pms.shots_faced)                                 AS shots_faced,
+    s.start_year                                          AS season_year,
+    s.label                                               AS season,
+    cb.player_id,
+    p.full_name                                           AS player_name,
+    cb.club_id,
+    c.name                                                AS club_name,
+    cb.position_group,
+    cb.appearances,
+    cb.starts,
+    cb.minutes,
+    cb.goals,
+    cb.assists,
+    cb.shots,
+    cb.shots_on_target,
+    cb.penalty_goals,
+    cb.penalty_attempts,
+    cb.non_penalty_goals,
+    cb.non_penalty_shots,
+    cb.non_penalty_shots_on_target,
+    cb.fouls_committed,
+    cb.fouls_suffered,
+    cb.yellow_cards,
+    cb.red_cards,
+    cb.saves,
+    cb.goals_conceded,
+    cb.shots_faced,
     -- NULLIF keeps players with 0 minutes from dividing by zero; their rates come out NULL.
-    ROUND(SUM(pms.goals) * 90.0 / NULLIF(SUM(pms.minutes_played), 0), 3)            AS goals_per90,
-    ROUND(SUM(pms.assists) * 90.0 / NULLIF(SUM(pms.minutes_played), 0), 3)          AS assists_per90,
-    ROUND((SUM(pms.goals) + SUM(pms.assists)) * 90.0 / NULLIF(SUM(pms.minutes_played), 0), 3) AS goal_contributions_per90,
-    ROUND(SUM(pms.shots) * 90.0 / NULLIF(SUM(pms.minutes_played), 0), 3)            AS shots_per90,
-    ROUND(SUM(pms.shots_on_target) * 90.0 / NULLIF(SUM(pms.minutes_played), 0), 3)  AS shots_on_target_per90,
-    ROUND(SUM(pms.goals)::NUMERIC / NULLIF(SUM(pms.shots), 0), 3)                   AS shot_conversion,
-    ROUND(SUM(pms.shots_on_target)::NUMERIC / NULLIF(SUM(pms.shots), 0), 3)         AS shot_accuracy
-FROM player_match_stats pms
-JOIN matches m ON m.match_id = pms.match_id
-JOIN seasons s ON s.season_id = m.season_id
-JOIN players p ON p.player_id = pms.player_id
-JOIN clubs c   ON c.club_id = pms.club_id
-GROUP BY s.start_year, s.label, pms.player_id, p.full_name, pms.club_id, c.name;
+    ROUND(cb.goals * 90.0 / NULLIF(cb.minutes, 0), 3)                          AS goals_per90,
+    ROUND(cb.non_penalty_goals * 90.0 / NULLIF(cb.minutes, 0), 3)              AS non_penalty_goals_per90,
+    ROUND(cb.assists * 90.0 / NULLIF(cb.minutes, 0), 3)                        AS assists_per90,
+    ROUND((cb.goals + cb.assists) * 90.0 / NULLIF(cb.minutes, 0), 3)           AS goal_contributions_per90,
+    ROUND(cb.shots * 90.0 / NULLIF(cb.minutes, 0), 3)                          AS shots_per90,
+    ROUND(cb.shots_on_target * 90.0 / NULLIF(cb.minutes, 0), 3)                AS shots_on_target_per90,
+    ROUND(cb.goals::NUMERIC / NULLIF(cb.shots, 0), 3)                          AS shot_conversion,
+    ROUND(cb.shots_on_target::NUMERIC / NULLIF(cb.shots, 0), 3)                AS shot_accuracy,
+    ROUND(cb.saves::NUMERIC / NULLIF(cb.saves + cb.goals_conceded, 0), 3)      AS save_pct
+FROM combined cb
+JOIN seasons s ON s.season_id = cb.season_id
+JOIN players p ON p.player_id = cb.player_id
+JOIN clubs c   ON c.club_id = cb.club_id;

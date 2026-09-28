@@ -108,7 +108,8 @@ EVENT_TYPES = {
     "goal---volley": "goal",
     "penalty---scored": "penalty_goal",
     "own-goal": "own_goal",
-    "penalty---saved": "penalty_missed",
+    # Saved penalties count as shots on target, misses don't, so keep them apart.
+    "penalty---saved": "penalty_saved",
     "penalty---missed": "penalty_missed",
     "penalty---hit-woodwork": "penalty_missed",
     "yellow-card": "yellow_card",

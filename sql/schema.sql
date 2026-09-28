@@ -154,8 +154,10 @@ CREATE TABLE match_events (
     event_id            SERIAL PRIMARY KEY,
     match_id            INTEGER NOT NULL REFERENCES matches (match_id) ON DELETE CASCADE,
     espn_play_id        BIGINT NOT NULL,
+    -- club_id is the club credited with the event. For own goals that's the
+    -- club that benefits, not the player's own club.
     event_type          TEXT NOT NULL CHECK (event_type IN (
-                            'goal', 'penalty_goal', 'own_goal', 'penalty_missed',
+                            'goal', 'penalty_goal', 'own_goal', 'penalty_saved', 'penalty_missed',
                             'yellow_card', 'red_card', 'substitution')),
     club_id             INTEGER REFERENCES clubs (club_id),
     player_id           INTEGER REFERENCES players (player_id),
