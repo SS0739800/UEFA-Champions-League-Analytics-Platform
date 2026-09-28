@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.validation.checks import run_checks, stat_coverage_by_season
+from src.validation.checks import blank_missing_stats, run_checks, stat_coverage_by_season
 from src.validation.schemas import validate_tables
 
 
@@ -143,3 +143,19 @@ def test_stat_coverage_spots_an_all_zero_stat(tables):
     assert row["nonzero_share"] == 0
     report = run_checks(tables)
     assert any("'interceptions' is zero" in warning for warning in report.warnings)
+
+
+def test_missing_stats_become_null_only_in_the_affected_season(tables):
+    other_season = tables["matches"].assign(espn_event_id=2, season_year=2023)
+    matches = pd.concat([tables["matches"], other_season], ignore_index=True)
+    club_stats = pd.concat(
+        [tables["club_match_stats"], tables["club_match_stats"].assign(espn_event_id=2)], ignore_index=True
+    )
+    club_stats.loc[club_stats["espn_event_id"] == 1, "interceptions"] = 0.0
+
+    cleaned = blank_missing_stats(club_stats, matches)
+    assert cleaned.loc[cleaned["espn_event_id"] == 1, "interceptions"].isna().all()
+    assert (cleaned.loc[cleaned["espn_event_id"] == 2, "interceptions"] == 5.0).all()
+    # Stats that are often 0 for real, like red cards, are left alone.
+    club_stats["red_cards"] = 0.0
+    assert (blank_missing_stats(club_stats, matches)["red_cards"] == 0).all()

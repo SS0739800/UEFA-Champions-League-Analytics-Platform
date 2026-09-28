@@ -199,8 +199,10 @@ combined AS (
         COALESCE(pen.penalty_goals, 0)                               AS penalty_goals,
         COALESCE(pen.penalty_attempts, 0)                            AS penalty_attempts,
         t.goals - COALESCE(pen.penalty_goals, 0)                     AS non_penalty_goals,
-        t.shots - COALESCE(pen.penalty_attempts, 0)                  AS non_penalty_shots,
-        t.shots_on_target - COALESCE(pen.penalties_on_target, 0)     AS non_penalty_shots_on_target
+        -- A handful of penalties aren't counted as shots by ESPN, which would
+        -- leave -1 here. Floor at zero rather than show a negative count.
+        GREATEST(t.shots - COALESCE(pen.penalty_attempts, 0), 0)                AS non_penalty_shots,
+        GREATEST(t.shots_on_target - COALESCE(pen.penalties_on_target, 0), 0)   AS non_penalty_shots_on_target
     FROM totals t
     LEFT JOIN penalties pen
         ON pen.season_id = t.season_id AND pen.player_id = t.player_id AND pen.club_id = t.club_id

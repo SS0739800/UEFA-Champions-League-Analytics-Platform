@@ -117,11 +117,13 @@ EVENT_TYPES = {
     "substitution": "substitution",
 }
 
-# Key events we don't store (kickoff, half-time and so on).
+# Key events we don't store: period markers, stoppages and VAR reviews. A VAR
+# review that changes something shows up again as its own goal or card event.
 IGNORED_EVENT_TYPES = {
     "kickoff", "halftime", "start-2nd-half", "end-regular-time", "start-extra-time",
     "end-extra-time", "start-shootout", "end-match", "end-first-half-extra-time",
-    "start-2nd-half-extra-time", "second-half-extra-time",
+    "start-2nd-half-extra-time", "second-half-extra-time", "halftime-extra-time",
+    "start-delay", "end-delay",
 }
 
 # A few ESPN names are awkward or differ from how the clubs are usually written.
@@ -373,7 +375,11 @@ def parse_key_events(summary: dict, espn_event_id: int) -> list[dict]:
     rows = []
     for key_event in summary.get("keyEvents", []):
         espn_type = key_event["type"].get("type", "")
-        if key_event.get("shootout") or espn_type in IGNORED_EVENT_TYPES:
+        # Period 5 is the shootout. Cards can be shown there too, but they're
+        # not part of the match we analyse.
+        if key_event.get("shootout") or key_event["period"]["number"] > 4:
+            continue
+        if espn_type in IGNORED_EVENT_TYPES or espn_type.startswith("var---"):
             continue
         if espn_type not in EVENT_TYPES:
             log.warning("Skipping unknown key event type '%s' in event %s", espn_type, espn_event_id)
@@ -418,6 +424,19 @@ def fill_sub_positions(player_stats: pd.DataFrame) -> pd.DataFrame:
     return player_stats
 
 
+def drop_repeated_roster_rows(player_stats: pd.DataFrame) -> pd.DataFrame:
+    """
+    A few 2018-19 matches list the goalkeeper twice with identical stats.
+    Drop exact copies only. If a player shows up twice with different numbers,
+    leave both so validation fails and someone looks at it.
+    """
+    deduplicated = player_stats.drop_duplicates()
+    dropped = len(player_stats) - len(deduplicated)
+    if dropped:
+        log.warning("Dropped %s exact duplicate player rows from ESPN rosters", dropped)
+    return deduplicated.reset_index(drop=True)
+
+
 def goals_after_90(events: pd.DataFrame, matches: pd.DataFrame) -> pd.DataFrame:
     """Count goals in the first two periods for each finished match."""
     goal_types = {"goal", "penalty_goal", "own_goal"}
@@ -457,7 +476,8 @@ def transform(events: list[dict], summary_dir: Path) -> dict[str, pd.DataFrame]:
         key_events += parse_key_events(summary, match.espn_event_id)
 
     club_stats = pd.DataFrame(club_stats)
-    player_stats = fill_sub_positions(pd.DataFrame(player_stats))
+    player_stats = drop_repeated_roster_rows(pd.DataFrame(player_stats))
+    player_stats = fill_sub_positions(player_stats)
     key_events = pd.DataFrame(key_events)
     matches = goals_after_90(key_events, matches)
 

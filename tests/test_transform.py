@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from src.etl.transform import (
+    drop_repeated_roster_rows,
     fill_sub_positions,
     goals_after_90,
     is_neutral_venue,
@@ -189,3 +190,9 @@ def test_goals_after_90_ignores_extra_time():
     # The own goal is credited to club 200, the extra-time goal doesn't count.
     assert result.loc[0, "home_goals_90"] == 1
     assert result.loc[0, "away_goals_90"] == 1
+
+
+def test_exact_duplicate_roster_rows_are_dropped_but_conflicts_are_kept():
+    rows = pd.DataFrame({"espn_event_id": [1, 1, 1, 1], "espn_athlete_id": [5, 5, 6, 6], "saves": [3, 3, 1, 2]})
+    result = drop_repeated_roster_rows(rows)
+    assert result["espn_athlete_id"].tolist() == [5, 6, 6]

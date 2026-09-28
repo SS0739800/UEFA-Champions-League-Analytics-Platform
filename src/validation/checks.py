@@ -186,15 +186,36 @@ USUALLY_ZERO_STATS = {"red_cards", "offsides"}
 
 def check_stat_coverage(tables: dict, report: ValidationReport) -> pd.DataFrame:
     coverage = stat_coverage_by_season(tables["club_match_stats"], tables["matches"])
-    gaps = coverage[
-        (coverage["nonzero_share"] < MIN_NONZERO_SHARE) & ~coverage["stat"].isin(USUALLY_ZERO_STATS)
-    ]
+    gaps = missing_stat_seasons(coverage).merge(coverage, on=["season_year", "stat"])
     for row in gaps.itertuples():
         report.warnings.append(
             f"'{row.stat}' is zero in {1 - row.nonzero_share:.0%} of {row.season_year} team-matches, "
             "treating it as missing for that season"
         )
     return coverage
+
+
+def missing_stat_seasons(coverage: pd.DataFrame) -> pd.DataFrame:
+    """The (season, stat) pairs we treat as missing rather than genuinely zero."""
+    return coverage[
+        (coverage["nonzero_share"] < MIN_NONZERO_SHARE) & ~coverage["stat"].isin(USUALLY_ZERO_STATS)
+    ][["season_year", "stat"]]
+
+
+def blank_missing_stats(club_match_stats: pd.DataFrame, matches: pd.DataFrame) -> pd.DataFrame:
+    """
+    Replace ESPN's zeros with NULL for stats that are missing for a whole season.
+
+    Otherwise 2017-18 would show 0 passes per match, and averages across
+    seasons would be dragged down by numbers that were never recorded.
+    """
+    coverage = stat_coverage_by_season(club_match_stats, matches)
+    season_of_match = club_match_stats["espn_event_id"].map(matches.set_index("espn_event_id")["season_year"])
+
+    cleaned = club_match_stats.copy()
+    for row in missing_stat_seasons(coverage).itertuples():
+        cleaned.loc[season_of_match == row.season_year, row.stat] = None
+    return cleaned
 
 
 def run_checks(tables: dict) -> ValidationReport:

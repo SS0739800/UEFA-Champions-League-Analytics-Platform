@@ -52,11 +52,19 @@ only downloaded once.
   | Stat | Missing for |
   |---|---|
   | Interceptions | 2012-13 to 2017-18 |
-  | Crosses, long balls, tackles, clearances | 2017-18 |
+  | Passes, crosses, long balls, tackles, clearances | 2017-18 |
 
 - **`penaltyKickGoals` is wrong in some seasons.** In 2015-16 it holds the
   team's total goals (Real Madrid 4-0 Shakhtar shows 4 penalty goals, but there
   were 2). We don't use that field. Penalties are counted from the key events.
+- **A few player stats disagree with the key events.** In one match (Club
+  Brugge 2-1 Sporting CP, 10 Dec 2024) an own goal is also counted as a goal in
+  the player's stats. The pipeline flags matches like this in
+  `data/processed/validation_inconsistent_scores.csv` and keeps them, since it's
+  one match in 1,890. A handful of penalties aren't counted as shots, so
+  non-penalty shot counts are floored at zero.
+- **Some 2018-19 rosters list the goalkeeper twice** with identical stats. Exact
+  duplicates are dropped during the transform.
 - **Minutes played are approximate.** ESPN doesn't give minutes directly. We
   work them out from substitution and red card times, ignoring added time, so a
   player on the pitch for all of a 90+6 match is recorded as 90 minutes.

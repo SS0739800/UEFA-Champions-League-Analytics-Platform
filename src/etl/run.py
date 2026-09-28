@@ -17,7 +17,7 @@ from src.database.connection import get_engine
 from src.etl.extract import SUMMARY_DIR, run_extract
 from src.etl.load import load_all
 from src.etl.transform import transform
-from src.validation.checks import run_checks, stat_coverage_by_season
+from src.validation.checks import blank_missing_stats, run_checks, stat_coverage_by_season
 from src.validation.schemas import validate_tables
 
 log = logging.getLogger("etl")
@@ -58,6 +58,8 @@ def main() -> None:
     report = run_checks(tables)
     save_processed(tables, report)
     report.raise_if_errors()
+    # Stats ESPN never recorded for a season come through as 0. Store them as NULL instead.
+    tables["club_match_stats"] = blank_missing_stats(tables["club_match_stats"], tables["matches"])
 
     log.info("Step 4/5: load into PostgreSQL")
     engine = get_engine()
