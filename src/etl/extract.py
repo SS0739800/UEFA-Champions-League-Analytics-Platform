@@ -40,6 +40,13 @@ def make_session() -> requests.Session:
 
 def get_json(session: requests.Session, url: str, params: dict) -> dict:
     response = session.get(url, params=params, timeout=30)
+    if response.status_code in (403, 429):
+        # ESPN starts refusing requests after a big download. It clears up on its own.
+        raise RuntimeError(
+            f"ESPN refused the request ({response.status_code}) for {response.url}. This usually means too "
+            "many requests in a short time. Wait a while and try again, or rebuild from the raw files you "
+            "already have with: python -m src.etl.run --offline"
+        )
     response.raise_for_status()
     time.sleep(REQUEST_PAUSE_SECONDS)
     return response.json()

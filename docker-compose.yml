@@ -18,7 +18,8 @@ services:
   # Loads (or refreshes) the database. Runs once and exits.
   etl:
     build: .
-    command: python -m src.etl.run
+    # Set ETL_ARGS=--offline to rebuild from data/raw without calling ESPN.
+    command: python -m src.etl.run ${ETL_ARGS:-}
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432

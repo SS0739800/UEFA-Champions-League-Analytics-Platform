@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # A throwaway PostgreSQL for the SQL tests. The app smoke tests skip
+    # themselves because this database has no match data in it.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ucl
+          POSTGRES_PASSWORD: ucl
+          POSTGRES_DB: ucl_analytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ucl"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      POSTGRES_USER: ucl
+      POSTGRES_PASSWORD: ucl
+      POSTGRES_DB: ucl_analytics
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest ruff
+
+      - name: Lint
+        run: ruff check app src tests
+
+      - name: Check for em dashes
+        run: |
+          if grep -rn --exclude-dir=.git $'—' .; then
+            echo "Found an em dash. Use a comma, colon or separate sentence instead."
+            exit 1
+          fi
+
+      - name: Check the SQL files load
+        run: |
+          python - <<'EOF'
+          from sqlalchemy import create_engine
+          from src.config import SQL_DIR, database_url
+          engine = create_engine(database_url())
+          with engine.begin() as connection:
+              connection.exec_driver_sql((SQL_DIR / "schema.sql").read_text())
+              connection.exec_driver_sql((SQL_DIR / "views.sql").read_text())
+          print("schema.sql and views.sql loaded")
+          EOF
+
+      - name: Run tests
+        run: pytest -q
