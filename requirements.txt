@@ -1,0 +1,23 @@
+# Data and analysis
+pandas==3.0.6
+numpy==2.5.3
+scipy==1.18.1
+statsmodels==0.15.0
+scikit-learn==1.9.1
+
+# Database
+SQLAlchemy==2.1.1
+psycopg[binary]==3.3.6
+
+# Pulling data from ESPN
+requests==2.34.2
+
+# Validation
+pandera==0.33.1
+
+# Dashboard
+streamlit==1.64.0
+plotly==7.1.0
+
+# Config
+python-dotenv==1.2.3
