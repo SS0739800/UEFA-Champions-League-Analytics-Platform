@@ -284,14 +284,14 @@ ORDER BY goal_difference_std;
 -- name: results_vs_elo_expectation
 -- Opponent-adjusted performance: how many more "points" a club took than Elo expected
 -- before each game. Scores are 1 for a win, 0.5 for a draw, 0 for a loss.
--- Home advantage is 60 Elo points (same as src/features/elo.py), except at neutral venues.
+-- Home advantage is 90 Elo points (same as src/features/elo.py), except at neutral venues.
 WITH scored AS (
     SELECT
         cm.club_id,
         CASE cm.result WHEN 'W' THEN 1.0 WHEN 'D' THEN 0.5 ELSE 0.0 END AS actual,
         1.0 / (1.0 + POWER(10, -(
             cm.elo_before - cm.opponent_elo_before
-            + CASE WHEN cm.is_neutral_venue THEN 0 WHEN cm.is_home THEN 60 ELSE -60 END
+            + CASE WHEN cm.is_neutral_venue THEN 0 WHEN cm.is_home THEN 90 ELSE -90 END
         ) / 400.0)) AS expected
     FROM v_club_matches cm
     WHERE cm.season_year = :season_year

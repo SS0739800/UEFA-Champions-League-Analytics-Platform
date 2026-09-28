@@ -152,10 +152,10 @@ with chart_right:
         line=dict(color=ACCENT, width=2), customdata=history["season"],
         hovertemplate="%{x|%d %b %Y} (%{customdata})<br>Elo: %{y:.0f}<extra></extra>",
     ))
-    fig.add_hline(y=1500, line_color=MUTED_MARK, line_width=1)
     style(fig, "Elo rating across all seasons", None, "Elo after match", height=340)
     show(st, fig)
-    st.caption("The grey line is the long-run average of 1500. Gaps are seasons the club wasn't in the competition.")
+    st.caption("Gaps are seasons the club wasn't in the competition. Ratings before about 2015 are still "
+               "settling, because every club starts from scratch in 2012-13.")
 
 st.markdown("**Every match**")
 club["score"] = club["goals_for"].astype(int).astype(str) + "-" + club["goals_against"].astype(int).astype(str)

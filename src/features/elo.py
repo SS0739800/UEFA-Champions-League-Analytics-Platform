@@ -3,8 +3,9 @@ Elo ratings built from Champions League results only.
 
 This is a standard Elo system with a home advantage and a bigger update for
 bigger wins (the same margin rule as the World Football Elo ratings). The
-parameters are picked in notebooks/05_prediction_model.ipynb using the early
-seasons only, and then left alone.
+parameters come from a grid search in notebooks/05_prediction_model.ipynb that
+only looks at 2013-14 to 2015-16, so the model backtest (2016-17 onwards)
+never influenced them.
 
 Limitations worth knowing:
 - Domestic form is invisible. A club can be flying in its league and it won't show.
@@ -16,11 +17,12 @@ import math
 import pandas as pd
 
 BASE_RATING = 1500.0
-# Most clubs we haven't seen before came through qualifying, so start them
-# a bit below the average club.
-NEW_CLUB_RATING = 1450.0
-K_FACTOR = 20.0
-HOME_ADVANTAGE = 60.0
+# Clubs we haven't seen before mostly came through qualifying and tend to lose
+# a lot at first. The grid search liked anything from 1200 to 1250.
+NEW_CLUB_RATING = 1250.0
+# Only 6 to 17 UCL games a season, so ratings need to move quickly.
+K_FACTOR = 50.0
+HOME_ADVANTAGE = 90.0
 # At the start of each season, pull everyone a fifth of the way back to 1500.
 # Squads change over the summer and old results matter less.
 SEASON_REGRESSION = 0.2
