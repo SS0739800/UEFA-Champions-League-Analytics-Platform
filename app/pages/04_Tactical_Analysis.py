@@ -36,6 +36,13 @@ profiles, auto = build_clusters(min_matches=4, k=None)
 silhouettes = auto["silhouettes"]
 
 # Only offer seasons where at least some clubs have played enough games to be clustered.
+def with_club_names(frame):
+    """Add club names. Profiles only carry ids, and a club's name can be looked up per season."""
+    names = data.club_seasons().set_index(["season_year", "club_id"])["club_name"]
+    keys = list(zip(frame["season_year"], frame["club_id"]))
+    return frame.assign(club_name=[names.get(key, "") for key in keys])
+
+
 season_year = season_picker(allowed=set(profiles["season_year"]))
 footer()
 
@@ -112,10 +119,9 @@ if k <= 3:
         marker=dict(color=MUTED_MARK, size=6, opacity=0.5),
         customdata=others[["season", "club_id", "cluster"]], hoverinfo="skip",
     ))
-    names = data.club_seasons().set_index(["season_year", "club_id"])["club_name"]
     for cluster in range(1, k + 1):
         subset = in_season[in_season["cluster"] == cluster]
-        subset = subset.assign(club_name=[names.get((s, c), "") for s, c in zip(subset["season_year"], subset["club_id"])])
+        subset = with_club_names(subset)
         fig.add_trace(go.Scatter(
             x=subset["pc1"], y=subset["pc2"], mode="markers", name=f"Cluster {cluster}",
             marker=dict(color=SERIES[cluster - 1], size=10, line=dict(color="white", width=2)),
@@ -127,15 +133,15 @@ if k <= 3:
     show(st, fig)
 else:
     # More than three groups is too many colours for one scatter, so draw one small panel per cluster.
-    names = data.club_seasons().set_index(["season_year", "club_id"])["club_name"]
-    fig = make_subplots(rows=1, cols=k, shared_yaxes=True, subplot_titles=[f"Cluster {i}" for i in range(1, k + 1)])
+    titles = [f"Cluster {i}" for i in range(1, k + 1)]
+    fig = make_subplots(rows=1, cols=k, shared_yaxes=True, subplot_titles=titles)
     for cluster in range(1, k + 1):
         rest = clustered[clustered["cluster"] != cluster]
         fig.add_trace(go.Scatter(x=rest["pc1"], y=rest["pc2"], mode="markers", showlegend=False,
                                  marker=dict(color=MUTED_MARK, size=4, opacity=0.4), hoverinfo="skip"),
                       row=1, col=cluster)
         subset = in_season[in_season["cluster"] == cluster]
-        subset = subset.assign(club_name=[names.get((s, c), "") for s, c in zip(subset["season_year"], subset["club_id"])])
+        subset = with_club_names(subset)
         fig.add_trace(go.Scatter(
             x=subset["pc1"], y=subset["pc2"], mode="markers", showlegend=False,
             marker=dict(color=ACCENT, size=8, line=dict(color="white", width=1.5)),
@@ -182,8 +188,7 @@ with left:
 
 with right:
     similar = similar_clubs(clustered, season_year, club_id, n=8)
-    names = data.club_seasons().set_index(["season_year", "club_id"])["club_name"]
-    similar = similar.assign(club_name=[names.get((s, c)) for s, c in zip(similar["season_year"], similar["club_id"])])
+    similar = with_club_names(similar)
     st.markdown(f"**Closest profiles to {club_name} {row['season']}**")
     show_table(similar, {
         "club_name": ("Club", "text"), "season": ("Season", "text"), "cluster": ("Cluster", "int"),

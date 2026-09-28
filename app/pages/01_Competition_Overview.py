@@ -66,7 +66,9 @@ with left:
 with right:
     st.subheader("Latest results", anchor=False)
     recent = home_rows.sort_values("kickoff_utc", ascending=False).head(12).copy()
-    recent["score"] = recent["goals_for"].astype(int).astype(str) + "-" + recent["goals_against"].astype(int).astype(str)
+    recent["score"] = (
+        recent["goals_for"].astype(int).astype(str) + "-" + recent["goals_against"].astype(int).astype(str)
+    )
     recent["stage_label"] = recent["stage"].str.replace("_", " ").str.capitalize()
     recent["date"] = recent["kickoff_utc"].dt.date
     show_table(recent, {
@@ -132,7 +134,9 @@ chart_left, chart_right = st.columns(2, gap="large")
 with chart_left:
     show(st, trend_chart("goals_per_match", "Goals per match", "Goals", ".2f"))
 with chart_right:
-    show(st, trend_chart("shots_on_target_per_match", "Shots on target per match (both teams)", "Shots on target", ".1f"))
+    show(st, trend_chart(
+        "shots_on_target_per_match", "Shots on target per match (both teams)", "Shots on target", ".1f"
+    ))
 st.caption(f"{season_label} is highlighted. 2026-27 only covers the matches played so far.")
 
 chart_left, chart_right = st.columns(2, gap="large")

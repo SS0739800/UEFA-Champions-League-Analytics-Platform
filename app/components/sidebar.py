@@ -19,7 +19,10 @@ def season_picker(min_season: int | None = None, allowed: set[int] | None = None
 
     # A ?season=2024 link wins, then the season picked on another page, then the current season.
     from_url = st.query_params.get("season")
-    remembered = int(from_url) if from_url and from_url.isdigit() else st.session_state.get("shared_season", CURRENT_SEASON)
+    if from_url and from_url.isdigit():
+        remembered = int(from_url)
+    else:
+        remembered = st.session_state.get("shared_season", CURRENT_SEASON)
     default = remembered if remembered in options else options[0]
 
     chosen = st.sidebar.selectbox(

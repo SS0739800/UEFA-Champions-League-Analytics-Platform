@@ -186,6 +186,6 @@ class TestNamedQueries:
             "season_year": 2022, "limit": 10, "min_minutes": 0, "min_shots": 0, "player_ids": [1, 3],
             "club_id": 1, "from_season": 2012, "to_season": 2030, "current_season": 2030,
         }
-        for name, sql in load_queries().items():
+        for sql in load_queries().values():
             used = {key: value for key, value in params.items() if f":{key}" in sql}
             fetch(engine, sql, **used)

@@ -204,7 +204,8 @@ with backtest_tab:
     show_table(past, {
         "date": ("Date", "date"), "home": ("Home", "text"), "away": ("Away", "text"),
         "p_home_win": ("Home win", "prob"), "p_draw": ("Draw", "prob"), "p_away_win": ("Away win", "prob"),
-        "score_90": ("Score at 90'", "text"), "actual_label": ("Result", "text"), "hit": ("Most likely was right", "text"),
+        "score_90": ("Score at 90'", "text"), "actual_label": ("Result", "text"),
+        "hit": ("Most likely was right", "text"),
     }, height=420)
 
 # --- Calibration ----------------------------------------------------------------------------------

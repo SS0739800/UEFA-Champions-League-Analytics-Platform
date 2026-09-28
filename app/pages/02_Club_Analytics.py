@@ -121,7 +121,8 @@ club["label"] = club["kickoff_utc"].dt.strftime("%d %b")
 chart_left, chart_right = st.columns(2, gap="large")
 with chart_left:
     fig = go.Figure()
-    for column, name, color in [("shots_on_target", "For", SERIES[0]), ("shots_on_target_against", "Against", SERIES[1])]:
+    sides = [("shots_on_target", "For", SERIES[0]), ("shots_on_target_against", "Against", SERIES[1])]
+    for column, name, color in sides:
         fig.add_trace(go.Bar(
             x=club["label"], y=club[column], name=name, marker_color=color, customdata=club["opponent_name"],
             hovertemplate="%{x} v %{customdata}<br>" + name + ": %{y}<extra></extra>",
@@ -142,7 +143,9 @@ with chart_right:
     """, club_id=club_id)
     # Break the line where the club missed a season, so it doesn't draw a fake trend across the gap.
     missed = history["season_year"].diff() > 1
-    gaps = history[missed].assign(elo_after=np.nan, kickoff_utc=history.loc[missed, "kickoff_utc"] - pd.Timedelta(days=1))
+    gaps = history[missed].assign(
+        elo_after=np.nan, kickoff_utc=history.loc[missed, "kickoff_utc"] - pd.Timedelta(days=1)
+    )
     history = pd.concat([history, gaps]).sort_values("kickoff_utc")
     fig = go.Figure(go.Scatter(
         x=history["kickoff_utc"], y=history["elo_after"].astype(float), mode="lines", connectgaps=False,

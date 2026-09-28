@@ -19,7 +19,7 @@ def read_sql(query: str, params: dict | None = None) -> pd.DataFrame:
 
     # PostgreSQL NUMERIC comes back as Decimal, and a column that's all NULL
     # comes back as object. Both break numpy maths, so make them floats.
-    for column in frame.columns[frame.dtypes == object]:
+    for column in frame.select_dtypes(include="object").columns:
         values = frame[column].dropna()
         if values.empty or all(isinstance(value, Decimal) for value in values):
             frame[column] = pd.to_numeric(frame[column], errors="coerce").astype(float)

@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+include = ["app/**/*.py", "src/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+# zip() over columns of the same frame can't be uneven, so strict= is just noise here.
+ignore = ["B905"]
+
+[tool.ruff.lint.per-file-ignores]
+# The SQL fixture rows read better on one line each.
+"tests/test_sql.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
