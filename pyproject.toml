@@ -17,3 +17,6 @@ ignore = ["B905"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Put the project root on the import path, so `src` and `app` import the same
+# way whether you run `pytest` or `python -m pytest`.
+pythonpath = ["."]
