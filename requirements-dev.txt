@@ -3,7 +3,8 @@
 pytest==9.1.1
 ruff==0.16.9
 
-# Only needed to run the notebooks
+# Only needed to run the notebooks (matplotlib because GitHub shows static charts, not Plotly)
 ipykernel
 nbformat
 nbconvert
+matplotlib==3.11.2
