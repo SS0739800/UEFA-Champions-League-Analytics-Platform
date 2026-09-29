@@ -202,12 +202,24 @@ def missing_stat_seasons(coverage: pd.DataFrame) -> pd.DataFrame:
     ][["season_year", "stat"]]
 
 
+# ESPN records these as one block. When a match is missing them, they're all 0
+# while shots and possession are still filled in.
+PASSING_AND_DEFENDING = [
+    "passes", "passes_completed", "crosses", "crosses_completed", "long_balls", "long_balls_completed",
+    "tackles", "tackles_won", "interceptions", "clearances",
+]
+
+
 def blank_missing_stats(club_match_stats: pd.DataFrame, matches: pd.DataFrame) -> pd.DataFrame:
     """
-    Replace ESPN's zeros with NULL for stats that are missing for a whole season.
+    Replace ESPN's zeros with NULL where the stat was never recorded.
 
-    Otherwise 2017-18 would show 0 passes per match, and averages across
-    seasons would be dragged down by numbers that were never recorded.
+    Two cases:
+    - a stat missing for a whole season (e.g. passes in 2017-18)
+    - single matches where the passing and defending block is all 0. No team
+      makes zero passes in a game, so that block is missing for the match.
+
+    Otherwise averages get dragged down by numbers that were never recorded.
     """
     coverage = stat_coverage_by_season(club_match_stats, matches)
     season_of_match = club_match_stats["espn_event_id"].map(matches.set_index("espn_event_id")["season_year"])
@@ -215,6 +227,11 @@ def blank_missing_stats(club_match_stats: pd.DataFrame, matches: pd.DataFrame) -
     cleaned = club_match_stats.copy()
     for row in missing_stat_seasons(coverage).itertuples():
         cleaned.loc[season_of_match == row.season_year, row.stat] = None
+
+    no_passes = cleaned["passes"].fillna(0) == 0
+    cleaned.loc[no_passes, PASSING_AND_DEFENDING] = None
+    if no_passes.any():
+        log.info("Passing and defending stats missing for %s team-matches, stored as NULL", int(no_passes.sum()))
     return cleaned
 
 

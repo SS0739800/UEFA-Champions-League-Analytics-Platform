@@ -62,7 +62,7 @@ st.markdown(
     f"""
 - {NO_XG}
 - Some team stats are missing for older seasons (interceptions before 2018-19; passing, crossing and
-  tackling in 2017-18). Those show as blank, not zero.
+  tackling in 2017-18) and for a few hundred single team-matches. Those show as blank, not zero.
 - Player minutes are worked out from substitution times and ignore added time.
 - From 2024-25 the first phase changed from eight groups of four to one 36-team league,
   so compare group-stage numbers across that line with care.

@@ -94,7 +94,7 @@ st.caption(
 )
 
 show_table(shown.sort_values("goals_above_average", ascending=False), {
-    "player_name": ("Player", "text"), "club_name": ("Club", "text"), "position_group": ("Pos", "text"),
+    "player_name": ("Player", "text"), "club_name": ("Club", "text"),
     "minutes": ("Mins", "int"), "non_penalty_shots": ("NP shots", "int"),
     "non_penalty_shots_on_target": ("NP SoT", "int"), "non_penalty_goals": ("NP goals", "int"),
     "np_conversion": ("Conv.", "pct"), "np_goals_per_shot_on_target": ("Goals / SoT", "pct"),

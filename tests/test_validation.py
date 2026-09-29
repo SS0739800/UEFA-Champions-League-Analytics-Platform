@@ -159,3 +159,15 @@ def test_missing_stats_become_null_only_in_the_affected_season(tables):
     # Stats that are often 0 for real, like red cards, are left alone.
     club_stats["red_cards"] = 0.0
     assert (blank_missing_stats(club_stats, matches)["red_cards"] == 0).all()
+
+
+def test_a_match_with_zero_passes_has_its_passing_and_defending_blanked(tables):
+    club_stats = tables["club_match_stats"].copy()
+    club_stats.loc[0, ["passes", "passes_completed", "tackles", "interceptions"]] = 0.0
+
+    cleaned = blank_missing_stats(club_stats, tables["matches"])
+    assert cleaned.loc[0, ["passes", "tackles", "interceptions"]].isna().all()
+    # Shots were recorded, so they stay.
+    assert cleaned.loc[0, "shots"] == 5.0
+    # The other team's row is untouched.
+    assert cleaned.loc[1, "passes"] == 5.0

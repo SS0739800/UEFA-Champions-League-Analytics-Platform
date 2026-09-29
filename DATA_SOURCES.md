@@ -54,6 +54,11 @@ only downloaded once.
   | Interceptions | 2012-13 to 2017-18 |
   | Passes, crosses, long balls, tackles, clearances | 2017-18 |
 
+  Single matches can be missing the same block even in good seasons (about 15%
+  of 2014-15, and a few games elsewhere). Those show 0 passes while shots and
+  possession are filled in, so any team-match with 0 passes has its passing and
+  defending stats stored as NULL: 312 team-matches in total.
+
 - **`penaltyKickGoals` is wrong in some seasons.** In 2015-16 it holds the
   team's total goals (Real Madrid 4-0 Shakhtar shows 4 penalty goals, but there
   were 2). We don't use that field. Penalties are counted from the key events.
