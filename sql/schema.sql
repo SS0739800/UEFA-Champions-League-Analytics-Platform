@@ -203,3 +203,14 @@ CREATE TABLE model_evaluation (
     macro_f1        NUMERIC(5, 4) NOT NULL,
     PRIMARY KEY (model_name, test_season)
 );
+
+-- One row per pipeline run, including failed ones. Not dropped above, so the
+-- history survives a full rebuild. The dashboard shows the last successful check.
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    run_id              SERIAL PRIMARY KEY,
+    ran_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    mode                TEXT NOT NULL CHECK (mode IN ('full', 'update')),
+    status              TEXT NOT NULL CHECK (status IN ('succeeded', 'failed')),
+    finished_matches    INTEGER NOT NULL DEFAULT 0,
+    note                TEXT
+);

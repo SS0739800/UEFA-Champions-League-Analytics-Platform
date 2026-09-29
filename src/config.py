@@ -1,6 +1,7 @@
 """Project-wide settings: paths, database connection and a few analysis constants."""
 
 import os
+from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,10 +18,18 @@ SQL_DIR = PROJECT_ROOT / "sql"
 # ESPN's public site API. It is undocumented, so see DATA_SOURCES.md for caveats.
 ESPN_BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions"
 
-# Seasons are named by the year they start in (2026 means 2026-27).
+
+def season_for(day: date) -> int:
+    """
+    The season a date belongs to, named by its start year (2026 means 2026-27).
+    Finals are over by early June, so from July onwards it's the next season.
+    """
+    return day.year if day.month >= 7 else day.year - 1
+
+
 # ESPN only has knockout games for 2011-12, so 2012-13 is the first full season.
 FIRST_SEASON = 2012
-CURRENT_SEASON = 2026
+CURRENT_SEASON = season_for(date.today())
 
 # Default minimum minutes for per-90 tables: three full matches.
 DEFAULT_MIN_MINUTES = 270
@@ -31,8 +40,14 @@ def season_label(start_year: int) -> str:
 
 
 def database_url() -> str:
-    if os.getenv("DATABASE_URL"):
-        return os.environ["DATABASE_URL"]
+    url = os.getenv("DATABASE_URL")
+    if url:
+        # Hosted databases (Supabase, Neon) hand out postgresql:// URLs, which SQLAlchemy
+        # would open with psycopg2. We use psycopg 3, so say so explicitly.
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
     user = os.getenv("POSTGRES_USER", "ucl")
     password = os.getenv("POSTGRES_PASSWORD", "ucl")

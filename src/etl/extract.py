@@ -69,10 +69,10 @@ def calendar_years_to_fetch() -> list[int]:
     return list(range(FIRST_SEASON, last_year + 1))
 
 
-def fetch_scoreboards(session: requests.Session, refresh_years: set[int]) -> list[dict]:
+def fetch_scoreboards(session: requests.Session, refresh_years: set[int], years: list[int] | None = None) -> list[dict]:
     """Return every event from the yearly scoreboards, downloading any we don't have."""
     events = {}
-    for year in calendar_years_to_fetch():
+    for year in years or calendar_years_to_fetch():
         path = SCOREBOARD_DIR / f"{year}.json"
         if year in refresh_years or not path.exists():
             log.info("Downloading scoreboard for %s", year)
@@ -133,3 +133,31 @@ def run_extract(offline: bool = False) -> list[dict]:
     ]
     fetch_summaries(session, finished_ids)
     return events
+
+
+def run_extract_update(already_finished: set[int]) -> list[dict]:
+    """
+    Download just what an update needs and return the events still to load.
+
+    That's the scoreboards for this season and last (so a late final isn't
+    missed around the season change), and summaries only for matches that have
+    finished since the last load. Usually a handful of requests.
+    """
+    from src.etl.transform import is_main_tournament_event
+
+    first_season = max(FIRST_SEASON, CURRENT_SEASON - 1)
+    years = list(range(first_season, date.today().year + 1))
+
+    session = make_session()
+    events = fetch_scoreboards(session, refresh_years=set(years), years=years)
+    pending = [
+        event for event in events
+        if is_main_tournament_event(event)
+        and event["season"]["year"] >= first_season
+        and int(event["id"]) not in already_finished
+    ]
+    newly_finished = [event["id"] for event in pending if event["status"]["type"]["completed"]]
+    log.info("%s fixtures to add or update, %s newly finished", len(pending), len(newly_finished))
+
+    fetch_summaries(session, newly_finished)
+    return pending

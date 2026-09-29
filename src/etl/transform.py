@@ -266,9 +266,18 @@ def parse_event(event: dict) -> dict:
     }
 
 
+# Numeric match columns that can be empty for a whole batch (no shootouts, only
+# scheduled games). Without a fixed type pandas would store them as text.
+NUMERIC_MATCH_COLUMNS = [
+    "leg", "home_goals", "away_goals", "home_shootout_goals", "away_shootout_goals",
+    "winner_espn_id", "attendance",
+]
+
+
 def build_matches(events: list[dict]) -> pd.DataFrame:
     rows = [parse_event(event) for event in events if is_main_tournament_event(event)]
     matches = pd.DataFrame(rows).sort_values("kickoff_utc").reset_index(drop=True)
+    matches[NUMERIC_MATCH_COLUMNS] = matches[NUMERIC_MATCH_COLUMNS].astype(float)
     return matches
 
 
@@ -408,13 +417,18 @@ def parse_key_events(summary: dict, espn_event_id: int) -> list[dict]:
     return rows
 
 
-def fill_sub_positions(player_stats: pd.DataFrame) -> pd.DataFrame:
+def fill_sub_positions(player_stats: pd.DataFrame, known_groups: pd.Series | None = None) -> pd.DataFrame:
     """
     Substitutes come through as 'SUB', so borrow the position group the player
     most often starts in. Players who never started stay UNK.
+
+    known_groups (ESPN athlete id -> group) comes from the database during an
+    update, so a sub in a new match can use starts from earlier seasons too.
     """
     starts = player_stats[player_stats["position_group"].notna() & player_stats["is_starter"]]
     usual_group = starts.groupby("espn_athlete_id")["position_group"].agg(lambda groups: groups.mode().iloc[0])
+    if known_groups is not None:
+        usual_group = usual_group.combine_first(known_groups)
 
     player_stats = player_stats.copy()
     missing = player_stats["position_group"].isna()
@@ -449,13 +463,30 @@ def goals_after_90(events: pd.DataFrame, matches: pd.DataFrame) -> pd.DataFrame:
         return int(counts.get((row["espn_event_id"], row[f"{side}_espn_id"]), 0))
 
     matches = matches.copy()
-    matches["home_goals_90"] = matches.apply(count_for, axis=1, side="home")
-    matches["away_goals_90"] = matches.apply(count_for, axis=1, side="away")
+    for side in ("home", "away"):
+        matches[f"{side}_goals_90"] = matches.apply(count_for, axis=1, side=side).astype(float)
     return matches
 
 
-def transform(events: list[dict], summary_dir: Path) -> dict[str, pd.DataFrame]:
-    """Build every table from the raw scoreboard events and summary files."""
+CLUB_STATS_FRAME = ["espn_event_id", "espn_team_id", *CLUB_STAT_COLUMNS.values()]
+PLAYER_STATS_FRAME = [
+    "espn_event_id", "espn_athlete_id", "player_name", "espn_team_id", "position", "position_group",
+    "is_starter", "minute_on", "minute_off", "minutes_played", *PLAYER_STAT_COLUMNS.values(),
+]
+EVENTS_FRAME = [
+    "espn_event_id", "espn_play_id", "event_type", "espn_team_id", "espn_athlete_id", "player_name",
+    "secondary_espn_athlete_id", "secondary_player_name", "period", "minute", "added_time",
+]
+
+
+def transform(events: list[dict], summary_dir: Path, known_groups: pd.Series | None = None) -> dict[str, pd.DataFrame]:
+    """
+    Build every table from the raw scoreboard events and summary files.
+
+    The detail tables always get their full set of columns, even when an update
+    has no finished matches in it, so validation and loading don't trip over
+    an empty frame.
+    """
     from src.etl.extract import load_json
 
     matches = build_matches(events)
@@ -475,10 +506,10 @@ def transform(events: list[dict], summary_dir: Path) -> dict[str, pd.DataFrame]:
         player_stats += parse_player_stats(summary, match.espn_event_id, match_length)
         key_events += parse_key_events(summary, match.espn_event_id)
 
-    club_stats = pd.DataFrame(club_stats)
-    player_stats = drop_repeated_roster_rows(pd.DataFrame(player_stats))
-    player_stats = fill_sub_positions(player_stats)
-    key_events = pd.DataFrame(key_events)
+    club_stats = pd.DataFrame(club_stats, columns=CLUB_STATS_FRAME)
+    player_stats = drop_repeated_roster_rows(pd.DataFrame(player_stats, columns=PLAYER_STATS_FRAME))
+    player_stats = fill_sub_positions(player_stats, known_groups)
+    key_events = pd.DataFrame(key_events, columns=EVENTS_FRAME)
     matches = goals_after_90(key_events, matches)
 
     # Players can appear in key events without a roster entry, so collect names from both.

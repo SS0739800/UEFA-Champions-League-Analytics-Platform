@@ -187,6 +187,9 @@ def summarize_failures(failure_cases, frame) -> str:
 def validate_tables(tables: dict) -> None:
     """Run every schema. Pandera's lazy mode reports all problems at once instead of the first."""
     for name, schema in SCHEMAS.items():
+        # An update with no newly finished matches has empty detail tables. Nothing to check there.
+        if tables[name].empty:
+            continue
         try:
             schema.validate(tables[name], lazy=True)
         except pa.errors.SchemaErrors as error:

@@ -9,14 +9,10 @@ Set TEST_DATABASE_URL to point somewhere else. By default it uses the normal
 connection settings with "_test" added to the database name.
 """
 
-import os
-
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.engine import make_url
-from sqlalchemy.exc import OperationalError
+from sqlalchemy import text
 
-from src.config import SQL_DIR, database_url
+from src.config import SQL_DIR
 from src.database.queries import load_queries
 
 # Made-up season: three clubs, three group games, a final won on penalties and one unplayed game.
@@ -79,36 +75,13 @@ INSERT INTO club_elo (match_id, club_id, elo_before, elo_after) VALUES
 """
 
 
-def sql_test_url() -> str:
-    if os.getenv("TEST_DATABASE_URL"):
-        return os.environ["TEST_DATABASE_URL"]
-    url = make_url(database_url())
-    return url.set(database=f"{url.database}_test").render_as_string(hide_password=False)
-
-
 @pytest.fixture(scope="module")
-def engine():
-    url = make_url(sql_test_url())
-    admin_url = url.set(database="postgres")
-    try:
-        admin = create_engine(admin_url, isolation_level="AUTOCOMMIT")
-        with admin.connect() as connection:
-            exists = connection.execute(
-                text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": url.database}
-            ).scalar()
-            if not exists:
-                connection.execute(text(f'CREATE DATABASE "{url.database}"'))
-        admin.dispose()
-    except OperationalError:
-        pytest.skip("No PostgreSQL database available for SQL tests")
-
-    engine = create_engine(url)
-    with engine.begin() as connection:
+def engine(test_engine):
+    with test_engine.begin() as connection:
         connection.exec_driver_sql((SQL_DIR / "schema.sql").read_text(encoding="utf-8"))
         connection.exec_driver_sql((SQL_DIR / "views.sql").read_text(encoding="utf-8"))
         connection.exec_driver_sql(FIXTURE_SQL)
-    yield engine
-    engine.dispose()
+    return test_engine
 
 
 def fetch(engine, sql, **params):

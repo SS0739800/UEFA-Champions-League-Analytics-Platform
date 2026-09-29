@@ -6,8 +6,15 @@ The fixtures here are small, made-up matches between clubs like "Home FC" and
 without the network. None of these numbers are real.
 """
 
+import os
+
 import pandas as pd
 import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import OperationalError
+
+from src.config import database_url
 
 
 def make_event(
@@ -98,3 +105,32 @@ def simple_matches():
         "away_goals_90": [0, 1, 3, None],
         "is_neutral_venue": [False] * 4,
     })
+
+
+def throwaway_database_url() -> str:
+    """TEST_DATABASE_URL if set, otherwise the normal database with "_test" on the end."""
+    if os.getenv("TEST_DATABASE_URL"):
+        return os.environ["TEST_DATABASE_URL"]
+    url = make_url(database_url())
+    return url.set(database=f"{url.database}_test").render_as_string(hide_password=False)
+
+
+@pytest.fixture(scope="module")
+def test_engine():
+    """An engine for a throwaway test database, created if needed. Skips the tests without PostgreSQL."""
+    url = make_url(throwaway_database_url())
+    try:
+        admin = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
+        with admin.connect() as connection:
+            exists = connection.execute(
+                text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": url.database}
+            ).scalar()
+            if not exists:
+                connection.execute(text(f'CREATE DATABASE "{url.database}"'))
+        admin.dispose()
+    except OperationalError:
+        pytest.skip("No PostgreSQL database available for these tests")
+
+    engine = create_engine(url)
+    yield engine
+    engine.dispose()
