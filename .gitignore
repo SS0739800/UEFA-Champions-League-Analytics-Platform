@@ -10,6 +10,7 @@ venv/
 # Environment and secrets
 .env
 .streamlit/secrets.toml
+supabase.env
 
 # Data. Raw ESPN responses are not ours to redistribute, and everything
 # else can be rebuilt with `python -m src.etl.run`.
