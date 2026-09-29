@@ -7,8 +7,9 @@ venv/
 .ruff_cache/
 *.egg-info/
 
-# Environment
+# Environment and secrets
 .env
+.streamlit/secrets.toml
 
 # Data. Raw ESPN responses are not ours to redistribute, and everything
 # else can be rebuilt with `python -m src.etl.run`.

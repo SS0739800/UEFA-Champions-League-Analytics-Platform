@@ -73,6 +73,10 @@ def page_header(title: str, description: str) -> None:
 
 def footer() -> None:
     latest = data.last_updated()
+    checked = data.last_checked()
     if latest is not None:
-        st.sidebar.caption(f"Data: ESPN, up to {latest:%d %b %Y}.")
+        note = f"Data: ESPN, latest match {latest:%d %b %Y}."
+        if checked is not None:
+            note += f" Last checked for new results {checked:%d %b %Y, %H:%M} UTC."
+        st.sidebar.caption(note)
     st.sidebar.caption("Unofficial fan-made analytics. Not affiliated with or endorsed by UEFA.")

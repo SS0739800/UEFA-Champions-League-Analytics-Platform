@@ -9,6 +9,9 @@ select = ["E", "F", "W", "I", "B"]
 ignore = ["B905"]
 
 [tool.ruff.lint.per-file-ignores]
+# Pages fix up sys.path before importing the project, so their imports can't be at the very top.
+"app/Home.py" = ["E402"]
+"app/pages/*.py" = ["E402"]
 # The SQL fixture rows read better on one line each.
 "tests/test_sql.py" = ["E501"]
 

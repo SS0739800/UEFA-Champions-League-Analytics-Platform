@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# `streamlit run` only puts app/ on the import path, so add the project root for `app` and `src`.
+PROJECT_ROOT = next(path for path in Path(__file__).resolve().parents if (path / "src").is_dir())
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots

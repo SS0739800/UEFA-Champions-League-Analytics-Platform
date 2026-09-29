@@ -80,6 +80,15 @@ def player_seasons(season_year: int) -> pd.DataFrame:
                 season_year=season_year)
 
 
+def last_checked() -> pd.Timestamp | None:
+    """When the pipeline last ran successfully, whether or not it found anything new."""
+    frame = load("pipeline history", query,
+                 "SELECT MAX(ran_at) AS ran_at FROM pipeline_runs WHERE status = 'succeeded'")
+    checked = frame["ran_at"].iloc[0]
+    # The database hands back its own timezone; show UTC everywhere.
+    return None if pd.isna(checked) else pd.Timestamp(checked).tz_convert("UTC")
+
+
 def last_updated() -> pd.Timestamp | None:
     frame = load("match data", query, "SELECT MAX(kickoff_utc) AS latest FROM matches WHERE status = 'finished'")
     return frame["latest"].iloc[0]

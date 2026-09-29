@@ -1,17 +1,39 @@
+import sys
+from pathlib import Path
+
+# `streamlit run` only puts app/ on the import path, so add the project root for `app` and `src`.
+PROJECT_ROOT = next(path for path in Path(__file__).resolve().parents if (path / "src").is_dir())
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import streamlit as st
 
 from app.components import data
 from app.components.glossary import NO_XG
 from app.components.sidebar import footer, page_header
-from src.config import CURRENT_SEASON, season_label
 
 st.set_page_config(page_title="UCL Analytics", layout="wide")
 
-page_header("UCL Analytics", "Club and player analysis for the UEFA Champions League, 2012-13 to 2026-27.")
-
 seasons = data.seasons()
-current = seasons.set_index("season_year").loc[CURRENT_SEASON]
+# Seasons come newest first. Use the latest one in the data, which in July and
+# August is still last season until the new fixtures are published.
+newest = seasons.iloc[0]
+oldest = seasons.iloc[-1]
 latest = data.last_updated()
+
+page_header(
+    "UCL Analytics",
+    f"Club and player analysis for the UEFA Champions League, {oldest['season']} to {newest['season']}.",
+)
+
+if newest["scheduled"] > 0:
+    season_note = (
+        f"The {newest['season']} season is in progress: **{newest['finished']} of "
+        f"{newest['finished'] + newest['scheduled']}** listed matches have been played, so current-season "
+        "numbers rest on small samples."
+    )
+else:
+    season_note = f"The latest season in the data is {newest['season']}, which is complete."
 
 left, right = st.columns([3, 2], gap="large")
 
@@ -19,9 +41,7 @@ with left:
     st.markdown(
         f"""
 Compare clubs and players using results, shots, possession, passing and defensive
-stats from every Champions League match since 2012-13. The {season_label(CURRENT_SEASON)}
-season is in progress: **{current['finished']} of {current['finished'] + current['scheduled']}**
-listed matches have been played, so current-season numbers rest on small samples.
+stats from every Champions League match since {oldest['season']}. {season_note}
 
 | Page | What it answers |
 |---|---|
