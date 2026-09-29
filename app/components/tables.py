@@ -40,6 +40,8 @@ def show_table(frame: pd.DataFrame, columns: dict[str, tuple[str, str]], height:
                                                              help=tip, width="small")
         elif kind == "date":
             config[column] = st.column_config.DateColumn(label, format="D MMM YYYY", help=tip)
+        elif kind == "shortdate":
+            config[column] = st.column_config.DateColumn(label, format="D MMM", help=tip, width="small")
         else:
             view[column] = pd.to_numeric(view[column], errors="coerce")
             # Short labels like "GF" only need a narrow column.

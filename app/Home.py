@@ -2,14 +2,12 @@ import streamlit as st
 
 from app.components import data
 from app.components.glossary import NO_XG
-from app.components.sidebar import BASE_CSS, footer
+from app.components.sidebar import footer, page_header
 from src.config import CURRENT_SEASON, season_label
 
 st.set_page_config(page_title="UCL Analytics", layout="wide")
 
-st.markdown(BASE_CSS, unsafe_allow_html=True)
-st.title("UCL Analytics", anchor=False)
-st.caption("Club and player analysis for the UEFA Champions League, 2012-13 to 2026-27.")
+page_header("UCL Analytics", "Club and player analysis for the UEFA Champions League, 2012-13 to 2026-27.")
 
 seasons = data.seasons()
 current = seasons.set_index("season_year").loc[CURRENT_SEASON]

@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.components import data
-from app.components.charts import ACCENT, INK_MUTED, SERIES, show, style
+from app.components.charts import ACCENT, INK_MUTED, MARKER_RING, SERIES, show, style
 from app.components.glossary import HELP
 from app.components.sidebar import footer, page_header, season_picker
 from app.components.tables import show_table
@@ -68,7 +68,7 @@ with scoring:
         top = top.assign(lower=lower, upper=upper).iloc[::-1]
         fig = go.Figure(go.Scatter(
             x=top["non_penalty_goals_per90"], y=top["player_label"], mode="markers",
-            marker=dict(color=ACCENT, size=9, line=dict(color="white", width=2)),
+            marker=dict(color=ACCENT, size=9, line=MARKER_RING),
             error_x=dict(type="data", symmetric=False, array=top["upper"] - top["non_penalty_goals_per90"],
                          arrayminus=top["non_penalty_goals_per90"] - top["lower"], color=INK_MUTED, thickness=1.2),
             customdata=top[["non_penalty_goals", "minutes", "lower", "upper"]],

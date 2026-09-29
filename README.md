@@ -153,6 +153,11 @@ which is normal for football and why log loss matters more than accuracy here.
 
 A season can be linked directly, e.g. `/Club_Analytics?season=2024`.
 
+The look is a dark navy theme loosely inspired by the Champions League's colours, with condensed headings
+(Barlow Condensed, from Google Fonts). It deliberately doesn't use UEFA's logos, starball or typeface:
+this is an unofficial fan project and isn't affiliated with or endorsed by UEFA. Chart colours were checked
+for colour-blind separation and contrast against the navy background.
+
 ![Prediction Lab backtest](docs/images/prediction-backtest.png)
 
 ## How to run

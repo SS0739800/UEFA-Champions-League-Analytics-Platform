@@ -36,9 +36,10 @@ if played < 40:
     st.info(f"Only {played} matches of {season_label} have been played. Season averages will move a lot.")
 
 # --- Standings and recent results -------------------------------------------------
-left, right = st.columns([4, 3], gap="large")
+is_groups = seasons.loc[season_year, "format"] == "group_stage"
+table_tab, results_tab = st.tabs(["Group tables" if is_groups else "League phase table", "Latest results"])
 
-with left:
+with table_tab:
     standings = data.load("standings", data.query, """
         SELECT gs.*, c.name AS club_name FROM v_group_standings gs
         JOIN clubs c ON c.club_id = gs.club_id
@@ -46,13 +47,11 @@ with left:
         ORDER BY gs.group_name, gs.position
     """, season_year=season_year)
 
-    if seasons.loc[season_year, "format"] == "group_stage":
-        st.subheader("Group tables", anchor=False)
+    if is_groups:
         group = st.segmented_control("Group", sorted(standings["group_name"].unique()), default="A",
                                      label_visibility="collapsed")
         table = standings[standings["group_name"] == (group or "A")]
     else:
-        st.subheader("League phase table", anchor=False)
         table = standings
 
     show_table(table, {
@@ -63,8 +62,7 @@ with left:
     st.caption("Worked out from results. Ties are split on goal difference then goals scored, "
                "not UEFA's full tiebreakers, so a tied position can differ from the official table.")
 
-with right:
-    st.subheader("Latest results", anchor=False)
+with results_tab:
     recent = home_rows.sort_values("kickoff_utc", ascending=False).head(12).copy()
     recent["score"] = (
         recent["goals_for"].astype(int).astype(str) + "-" + recent["goals_against"].astype(int).astype(str)
@@ -72,8 +70,8 @@ with right:
     recent["stage_label"] = recent["stage"].str.replace("_", " ").str.capitalize()
     recent["date"] = recent["kickoff_utc"].dt.date
     show_table(recent, {
-        "date": ("Date", "date"), "club_name": ("Home", "text"), "score": ("Score", "text"),
-        "opponent_name": ("Away", "text"),
+        "date": ("Date", "shortdate"), "stage_label": ("Stage", "text"), "club_name": ("Home", "text"),
+        "score": ("Score", "text"), "opponent_name": ("Away", "text"),
     }, height=460)
 
 # --- Tournament Performance Index -------------------------------------------------

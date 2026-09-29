@@ -3,7 +3,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from app.components import data
-from app.components.charts import ACCENT, DIVERGING, INK_MUTED, MUTED_MARK, SERIES, show, style
+from app.components.charts import ACCENT, DIVERGING, INK, INK_MUTED, MARKER_RING, MUTED_MARK, SERIES, show, style
 from app.components.sidebar import footer, page_header, season_picker
 from app.components.tables import show_table
 from src.analysis.tactical import (
@@ -124,7 +124,7 @@ if k <= 3:
         subset = with_club_names(subset)
         fig.add_trace(go.Scatter(
             x=subset["pc1"], y=subset["pc2"], mode="markers", name=f"Cluster {cluster}",
-            marker=dict(color=SERIES[cluster - 1], size=10, line=dict(color="white", width=2)),
+            marker=dict(color=SERIES[cluster - 1], size=10, line=MARKER_RING),
             customdata=subset[["season", "club_name", "cluster"]],
             hovertemplate="%{customdata[1]} (%{customdata[0]})<br>Cluster %{customdata[2]}<extra></extra>",
         ))
@@ -144,7 +144,7 @@ else:
         subset = with_club_names(subset)
         fig.add_trace(go.Scatter(
             x=subset["pc1"], y=subset["pc2"], mode="markers", showlegend=False,
-            marker=dict(color=ACCENT, size=8, line=dict(color="white", width=1.5)),
+            marker=dict(color=ACCENT, size=8, line=MARKER_RING),
             customdata=subset[["season", "club_name"]],
             hovertemplate="%{customdata[1]} (%{customdata[0]})<extra></extra>",
         ), row=1, col=cluster)
@@ -202,13 +202,17 @@ st.divider()
 season_named = season_rows.merge(season_clubs[["club_id", "club_name"]], on="club_id")
 fig = go.Figure(go.Scatter(
     x=season_named["possession_pct"], y=season_named["shots_against"], mode="markers",
-    marker=dict(color=[ACCENT if c == club_id else MUTED_MARK for c in season_named["club_id"]], size=10,
-                line=dict(color="white", width=2)),
+    marker=dict(color=[ACCENT if c == club_id else MUTED_MARK for c in season_named["club_id"]],
+                size=[16 if c == club_id else 9 for c in season_named["club_id"]], line=MARKER_RING),
     customdata=season_named[["club_name"]],
     hovertemplate="%{customdata[0]}<br>Possession %{x:.1f}%<br>Shots faced %{y:.1f} / match<extra></extra>",
 ))
 fig.add_vline(x=season_named["possession_pct"].median(), line_color=MUTED_MARK, line_width=1)
 fig.add_hline(y=season_named["shots_against"].median(), line_color=MUTED_MARK, line_width=1)
+# Name the selected club on the chart, so it doesn't rely on colour alone.
+selected = season_named[season_named["club_id"] == club_id].iloc[0]
+fig.add_annotation(x=selected["possession_pct"], y=selected["shots_against"], text=club_name, showarrow=False,
+                   yshift=18, font=dict(color=INK, size=12))
 style(fig, "Possession against shots faced", "Average possession (%)", "Shots faced per match", height=420)
 fig.update_yaxes(autorange="reversed")
 fig.add_annotation(x=0.01, y=0.99, xref="paper", yref="paper", showarrow=False, xanchor="left", yanchor="top",

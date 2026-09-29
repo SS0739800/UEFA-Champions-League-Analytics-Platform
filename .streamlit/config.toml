@@ -1,13 +1,22 @@
+# Dark navy theme, loosely inspired by the Champions League's colours.
+# Keep these in sync with SURFACE / PANEL in app/components/charts.py.
 [theme]
-base = "light"
-primaryColor = "#2a78d6"
-backgroundColor = "#f9f9f7"
-secondaryBackgroundColor = "#f0efec"
-textColor = "#1d1d1b"
+base = "dark"
+primaryColor = "#3987e5"
+backgroundColor = "#0a0f2e"
+secondaryBackgroundColor = "#111a45"
+textColor = "#f3f5ff"
 font = "sans serif"
+headingFont = "Barlow Condensed:https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap"
 baseRadius = "small"
-borderColor = "#e1e0d9"
+borderColor = "#26306a"
 showWidgetBorder = true
+dataframeHeaderBackgroundColor = "#16204f"
+
+[theme.sidebar]
+backgroundColor = "#070b24"
+secondaryBackgroundColor = "#111a45"
+borderColor = "#1d2657"
 
 [client]
 toolbarMode = "minimal"

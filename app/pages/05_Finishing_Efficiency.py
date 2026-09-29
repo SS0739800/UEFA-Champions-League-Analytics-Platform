@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.components import data
-from app.components.charts import ACCENT, INK_SECONDARY, MUTED_MARK, show, style
+from app.components.charts import ACCENT, INK_SECONDARY, MARKER_RING, MUTED_MARK, show, style
 from app.components.glossary import HELP, NO_XG
 from app.components.sidebar import footer, page_header, season_picker
 from app.components.tables import show_table
@@ -69,7 +69,7 @@ rng = np.random.default_rng(0)
 jitter = rng.uniform(-0.18, 0.18, len(shown))
 fig.add_trace(go.Scatter(
     x=shown["non_penalty_shots_on_target"] + jitter, y=shown["non_penalty_goals"], mode="markers", name="Players",
-    marker=dict(color=ACCENT, size=9, opacity=0.8, line=dict(color="white", width=2)),
+    marker=dict(color=ACCENT, size=9, opacity=0.8, line=MARKER_RING),
     customdata=shown[["player_label", "non_penalty_shots", "goals_above_average", "minutes",
                       "non_penalty_shots_on_target"]],
     hovertemplate="%{customdata[0]}<br>%{y} NP goals from %{customdata[4]} shots on target (%{customdata[1]} shots)"
@@ -117,7 +117,7 @@ fig.add_trace(go.Scatter(x=line_x, y=line_x * competition_rate, mode="lines", na
                          line=dict(color=MUTED_MARK, width=2), hoverinfo="skip"))
 fig.add_trace(go.Scatter(
     x=teams["sot_per_match"], y=teams["goals_per_match_float"], mode="markers", name="Clubs",
-    marker=dict(color=ACCENT, size=10, line=dict(color="white", width=2)),
+    marker=dict(color=ACCENT, size=10, line=MARKER_RING),
     customdata=teams[["club_name", "matches", "goals_per_shot_on_target"]],
     hovertemplate="%{customdata[0]} (%{customdata[1]} games)<br>%{x:.1f} shots on target / match"
                   "<br>%{y:.2f} goals / match<br>%{customdata[2]:.0%} of shots on target scored<extra></extra>",

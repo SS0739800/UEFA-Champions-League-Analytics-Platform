@@ -5,7 +5,7 @@ import streamlit as st
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 from app.components import data
-from app.components.charts import ACCENT, MUTED_MARK, SERIES, show, style
+from app.components.charts import ACCENT, MARKER_RING, MUTED_MARK, SEQUENTIAL, SERIES, show, style
 from app.components.glossary import HELP
 from app.components.sidebar import footer, page_header
 from app.components.tables import show_table
@@ -162,7 +162,7 @@ with backtest_tab:
         matrix = confusion_matrix(backtest["actual"], backtest["predicted"], labels=OUTCOMES)
         fig = go.Figure(go.Heatmap(
             z=matrix, x=[OUTCOME_NAMES[o] for o in OUTCOMES], y=[OUTCOME_NAMES[o] for o in OUTCOMES],
-            colorscale=[[0, "#f0efec"], [1, "#1c5cab"]], showscale=False, xgap=2, ygap=2,
+            colorscale=SEQUENTIAL, showscale=False, xgap=2, ygap=2,
             text=matrix, texttemplate="%{text}", textfont=dict(size=14),
             hovertemplate="Actual: %{y}<br>Predicted: %{x}<br>%{z} matches<extra></extra>",
         ))
@@ -183,8 +183,8 @@ with backtest_tab:
         st.markdown("**By outcome**")
         show_table(per_class, {
             "outcome": ("Outcome", "text"), "support": ("Matches", "int"), "precision": ("Precision", "pct"),
-            "recall": ("Recall", "pct"), "f1": ("F1", "dec2"), "predicted_share": ("Picked as most likely", "pct"),
-        })
+            "recall": ("Recall", "pct"), "f1": ("F1", "dec2"), "predicted_share": ("Picked", "pct"),
+        }, help_text={"predicted_share": "Share of matches where this was the model's most likely outcome."})
         st.caption(
             "Draws are almost never the single most likely outcome, so recall for draws is close to zero even "
             "though the model does give them sensible probabilities. That's normal for football models, and it's "
@@ -229,7 +229,7 @@ with calibration_tab:
         grouped = grouped[grouped["matches"] >= 15]
         fig.add_trace(go.Scatter(
             x=grouped["predicted"], y=grouped["observed"], mode="lines+markers", name=OUTCOME_NAMES[outcome],
-            line=dict(color=SERIES[i], width=2), marker=dict(size=8, line=dict(color="white", width=2)),
+            line=dict(color=SERIES[i], width=2), marker=dict(size=8, line=MARKER_RING),
             customdata=grouped["matches"],
             hovertemplate=OUTCOME_NAMES[outcome] + "<br>Predicted %{x:.0%}, happened %{y:.0%}"
                           "<br>%{customdata} matches<extra></extra>",

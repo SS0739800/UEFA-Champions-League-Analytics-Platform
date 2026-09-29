@@ -1,5 +1,7 @@
 """Filters shared across pages. The chosen season sticks when you change page."""
 
+import html
+
 import streamlit as st
 
 from app.components import data
@@ -40,25 +42,37 @@ def season_picker(min_season: int | None = None, allowed: set[int] | None = None
 
 
 # Streamlit's defaults are sized for landing pages. Tone headings and metric
-# numbers down so the data gets the space.
+# numbers down so the data gets the space, and add the navy header band.
 BASE_CSS = """
 <style>
-.block-container { padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1400px; }
-h1 { font-size: 1.75rem !important; font-weight: 650 !important; padding-bottom: 0.1rem !important; }
-h2, h3 { font-size: 1.15rem !important; font-weight: 600 !important; }
-[data-testid="stMetricValue"] { font-size: 1.45rem; }
-[data-testid="stMetricLabel"] p { font-size: 0.85rem; color: #52514e; }
+.block-container { padding-top: 2rem; padding-bottom: 3rem; max-width: 1400px; }
+h1, h2, h3 { font-family: 'Barlow Condensed', system-ui, sans-serif !important; letter-spacing: 0.01em; }
+h2, h3 { font-size: 1.35rem !important; font-weight: 700 !important; text-transform: uppercase; }
+[data-testid="stMetricValue"] { font-family: 'Barlow Condensed', system-ui, sans-serif; font-size: 1.9rem;
+                                font-weight: 700; }
+[data-testid="stMetricLabel"] p { font-size: 0.8rem; color: #8b93c2; text-transform: uppercase;
+                                  letter-spacing: 0.04em; }
+.page-band { background: #111a45; border-bottom: 3px solid #3987e5; border-radius: 4px;
+             padding: 1.1rem 1.4rem 0.9rem; margin-bottom: 1.4rem; }
+.page-band .page-title { font-family: 'Barlow Condensed', system-ui, sans-serif; font-weight: 700;
+                         font-size: 2.1rem; line-height: 1.1; text-transform: uppercase; color: #f3f5ff;
+                         letter-spacing: 0.02em; margin: 0; }
+.page-band .page-description { color: #c2c8ea; font-size: 0.95rem; margin: 0.3rem 0 0; }
 </style>
 """
 
 
 def page_header(title: str, description: str) -> None:
     st.markdown(BASE_CSS, unsafe_allow_html=True)
-    st.title(title, anchor=False)
-    st.caption(description)
+    st.markdown(
+        f'<div class="page-band"><p class="page-title">{html.escape(title)}</p>'
+        f'<p class="page-description">{html.escape(description)}</p></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def footer() -> None:
     latest = data.last_updated()
     if latest is not None:
         st.sidebar.caption(f"Data: ESPN, up to {latest:%d %b %Y}.")
+    st.sidebar.caption("Unofficial fan-made analytics. Not affiliated with or endorsed by UEFA.")
