@@ -36,6 +36,11 @@ cached in `data/raw/` and are **not** committed to git. Requests are rate
 limited (one every ~0.4s plus retries with backoff), and finished matches are
 only downloaded once.
 
+After the first full download (about 2,000 requests), ESPN refused every request
+from the machine for a few hours and then kept refusing this project's
+User-Agent for longer. The pipeline doesn't try to get around that. It stops
+with a clear message, and `--offline` rebuilds from the files already on disk.
+
 **Known limitations**
 
 - **No expected goals (xG).** ESPN doesn't publish xG for the Champions League,

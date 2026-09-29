@@ -1,0 +1,47 @@
+name: Update data
+
+# Adds new fixtures and results to the hosted database once a day.
+#
+# It runs all year, not just in season. Every run writes a row to
+# pipeline_runs, even when there's nothing new or ESPN refuses the request,
+# and that write is what stops a free Supabase project from pausing.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC. GitHub can start scheduled runs a little late.
+  workflow_dispatch:       # "Run workflow" button in the Actions tab
+
+# Never let two updates write to the database at the same time.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check the database secret is set
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Add a DATABASE_URL secret (Settings > Secrets and variables > Actions) pointing at Supabase."
+            exit 1
+          fi
+
+      - name: Add new fixtures and results
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m src.etl.run --update

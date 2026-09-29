@@ -28,7 +28,7 @@ the numbers can support.
 | Clubs / players | 112 clubs, 4,640 players, 54,942 player-match rows |
 | Match events | 27,063 goals, cards, penalties and substitutions |
 | SQL | Normalized schema, 4 views, 24 named analytical queries |
-| Tests | 122 (pure logic, validation rules, SQL views against a test database, and a smoke test of every page) |
+| Tests | 137 (pure logic, validation rules, SQL views and incremental updates against a test database, and a smoke test of every page) |
 
 ## Tech stack
 
@@ -37,6 +37,7 @@ the numbers can support.
 - **Validation**: Pandera
 - **Dashboard**: Streamlit, Plotly
 - **Testing and tooling**: pytest, ruff, Docker Compose, GitHub Actions
+- **Hosting**: Supabase (PostgreSQL), Streamlit Community Cloud, a daily GitHub Actions schedule
 
 ## Architecture
 
@@ -51,7 +52,8 @@ src/etl/transform.py    flat tables: matches, clubs, players, team stats, player
 src/validation/         Pandera column rules + cross-table checks (keys, duplicates, scores add up,
                         missing-stat detection). Structural problems stop the pipeline.
    v
-src/etl/load.py         one transaction: rebuild schema, insert tables, create views
+src/etl/load.py         one transaction: either rebuild everything, or (--update) upsert only
+                        new fixtures and newly finished matches
    v
 src/models/train.py     Elo ratings, walk-forward backtest, predictions for scheduled matches
    v
@@ -63,6 +65,12 @@ One command runs the whole thing:
 ```bash
 python -m src.etl.run
 ```
+
+After the first load, `python -m src.etl.run --update` only asks the database which matches it already
+has, downloads the new ones (usually a handful of requests) and upserts them by ESPN id, leaving older
+seasons untouched. Running the same update twice gives the same result (tested), and rewinding 2026-27 to
+before matchday 1 and then updating produced exactly the same rows as a full rebuild. A GitHub Actions workflow runs it every
+morning, and every run (including failed ones) is logged in a `pipeline_runs` table.
 
 ## Data sources
 
@@ -85,6 +93,7 @@ Champions League. Where xG would normally go, the project uses shots and shots o
 | `player_match_stats` | player per match they played in: minutes, goals, assists, shots, cards, saves |
 | `match_events` | goal, penalty, own goal, card or substitution |
 | `club_elo`, `match_predictions`, `model_evaluation` | derived tables written by the model step |
+| `pipeline_runs` | every pipeline run: when, full or update, succeeded or failed, how many matches |
 
 Season totals, standings and per-90 rates are **views** (`sql/views.sql`), not tables, so they can't drift
 out of sync with the match data. `sql/analytics_queries.sql` has 24 queries, each answering one question
@@ -188,9 +197,15 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 cp .env.example .env               # set the database settings
 
-python -m src.etl.run              # or --offline, or --skip-model
+python -m src.etl.run              # or --offline, --update, or --skip-model
 python -m streamlit run app/Home.py
 ```
+
+### Deploying
+
+The live version runs on Supabase, Streamlit Community Cloud and a daily GitHub Actions update.
+[docs/deployment.md](docs/deployment.md) walks through it, including the read-only database user the
+dashboard connects with.
 
 ## Testing
 
@@ -229,7 +244,6 @@ CI runs the linter, an em dash check, the SQL files against a real PostgreSQL se
 - Use StatsBomb's open event data for the finals it covers, to test how far shots on target is from real xG.
 - Model the score (e.g. a Poisson or Dixon-Coles model) instead of just the outcome, which would also give
   draw probabilities a better footing.
-- Schedule the pipeline to run after each matchday.
 
 ## License
 
