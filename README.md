@@ -6,6 +6,9 @@ A Python pipeline pulls every Champions League match from ESPN, checks it, and l
 A Streamlit dashboard sits on top: standings and trends, club and player breakdowns, style clustering,
 finishing analysis, and a match outcome model that's only allowed to use what was known before kickoff.
 
+**Live dashboard: [ucl-analytics.streamlit.app](https://ucl-analytics.streamlit.app/)**
+(it runs on a free tier, so the first visit after a quiet spell can take a little while to wake up)
+
 ![Competition overview](docs/images/competition-overview.png)
 
 ## Why I built it
