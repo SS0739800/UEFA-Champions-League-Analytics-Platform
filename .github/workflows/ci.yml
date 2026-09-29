@@ -34,9 +34,9 @@ jobs:
       POSTGRES_PORT: 5432
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: pip
@@ -48,11 +48,30 @@ jobs:
         run: ruff check app src tests
 
       - name: Check for em dashes
+        # Done in Python so it doesn't depend on the runner's locale, and so this
+        # file never contains the character it's looking for.
         run: |
-          if grep -rn --exclude-dir=.git $'—' .; then
-            echo "Found an em dash. Use a comma, colon or separate sentence instead."
-            exit 1
-          fi
+          python - <<'EOF'
+          import subprocess
+          import sys
+
+          dash = chr(0x2014)
+          files = subprocess.run(["git", "ls-files"], capture_output=True, text=True, check=True).stdout.splitlines()
+          found = []
+          for path in files:
+              try:
+                  text = open(path, encoding="utf-8").read()
+              except UnicodeDecodeError:
+                  continue  # images and other binary files
+              found += [f"{path}:{number}" for number, line in enumerate(text.splitlines(), 1) if dash in line]
+
+          if found:
+              print("Found em dashes. Use a comma, colon or separate sentence instead:")
+              for location in found:
+                  print(location)
+              sys.exit(1)
+          print(f"No em dashes in {len(files)} tracked files")
+          EOF
 
       - name: Check the SQL files load
         run: |
