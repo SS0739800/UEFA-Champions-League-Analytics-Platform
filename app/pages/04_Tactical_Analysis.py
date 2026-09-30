@@ -12,7 +12,7 @@ from plotly.subplots import make_subplots
 
 from app.components import data
 from app.components.charts import ACCENT, DIVERGING, INK, INK_MUTED, MARKER_RING, MUTED_MARK, SERIES, show, style
-from app.components.sidebar import footer, page_header, season_picker
+from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
 from src.analysis.tactical import (
     PROFILE_FEATURES,
@@ -22,7 +22,7 @@ from src.analysis.tactical import (
     similar_clubs,
 )
 
-st.set_page_config(page_title="Tactical Analysis | UCL Analytics", layout="wide")
+st.set_page_config(page_title="Tactical Analysis | UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 page_header("Tactical Analysis", "Style profiles from team stats, clubs grouped by how their numbers look.")
 
 

@@ -13,12 +13,12 @@ import streamlit as st
 from app.components import data
 from app.components.charts import ACCENT, INK_SECONDARY, MARKER_RING, MUTED_MARK, show, style
 from app.components.glossary import HELP, NO_XG
-from app.components.sidebar import footer, page_header, season_picker
+from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
 from src.analysis.finishing import goals_above_average, season_conversion_rates, team_finishing
 from src.analysis.player_metrics import default_min_minutes, filter_by_minutes
 
-st.set_page_config(page_title="Finishing & Efficiency | UCL Analytics", layout="wide")
+st.set_page_config(page_title="Finishing & Efficiency | UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 page_header("Finishing & Efficiency", "Goals compared with shots and shots on target, for players and clubs.")
 
 season_year = season_picker()

@@ -15,14 +15,14 @@ from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from app.components import data
 from app.components.charts import ACCENT, MARKER_RING, MUTED_MARK, SEQUENTIAL, SERIES, show, style
 from app.components.glossary import HELP
-from app.components.sidebar import footer, page_header
+from app.components.sidebar import PAGE_ICON, footer, page_header
 from app.components.tables import show_table
 from src.database.connection import get_engine
 from src.features.elo import calculate_elo
 from src.features.match_features import FEATURE_COLUMNS, OUTCOMES, build_match_features
 from src.models.train import FIRST_TRAINING_SEASON, load_model_inputs, make_models
 
-st.set_page_config(page_title="Prediction Lab | UCL Analytics", layout="wide")
+st.set_page_config(page_title="Prediction Lab | UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 page_header(
     "Prediction Lab",
     "Home win, draw or away win after 90 minutes, predicted only from what was known before kickoff.",

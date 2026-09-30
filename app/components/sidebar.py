@@ -5,7 +5,10 @@ import html
 import streamlit as st
 
 from app.components import data
-from src.config import CURRENT_SEASON
+from src.config import CURRENT_SEASON, PROJECT_ROOT
+
+# Tab icon: our own navy-and-blue star, not UEFA's logo (see the README).
+PAGE_ICON = str(PROJECT_ROOT / "app" / "static" / "favicon.png")
 
 
 def season_picker(min_season: int | None = None, allowed: set[int] | None = None, key: str = "season_year") -> int:

@@ -12,11 +12,11 @@ import streamlit as st
 from app.components import data
 from app.components.charts import ACCENT, MUTED_MARK, SERIES, show, style
 from app.components.glossary import HELP
-from app.components.sidebar import footer, page_header, season_picker
+from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
 from src.analysis.tournament_index import COMPONENT_LABELS, DEFAULT_WEIGHTS, index_components, tournament_index
 
-st.set_page_config(page_title="Competition Overview | UCL Analytics", layout="wide")
+st.set_page_config(page_title="Competition Overview | UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 page_header("Competition Overview", "Standings, results and trends for one season, with history for context.")
 
 season_year = season_picker()

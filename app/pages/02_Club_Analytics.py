@@ -14,11 +14,11 @@ import streamlit as st
 from app.components import data
 from app.components.charts import ACCENT, MUTED_MARK, SERIES, show, style
 from app.components.glossary import HELP, NO_XG
-from app.components.sidebar import footer, page_header, season_picker
+from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
 from src.analysis.tournament_index import STAGE_ORDER
 
-st.set_page_config(page_title="Club Analytics | UCL Analytics", layout="wide")
+st.set_page_config(page_title="Club Analytics | UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 page_header("Club Analytics", "One club's season: results, shots, home and away, and how it compares.")
 
 season_year = season_picker()

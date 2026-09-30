@@ -10,9 +10,9 @@ import streamlit as st
 
 from app.components import data
 from app.components.glossary import NO_XG
-from app.components.sidebar import footer, page_header
+from app.components.sidebar import PAGE_ICON, footer, page_header
 
-st.set_page_config(page_title="UCL Analytics", layout="wide")
+st.set_page_config(page_title="UCL Analytics", page_icon=PAGE_ICON, layout="wide")
 
 seasons = data.seasons()
 # Seasons come newest first. Use the latest one in the data, which in July and
