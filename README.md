@@ -165,6 +165,9 @@ which is normal for football and why log loss matters more than accuracy here.
 
 A season can be linked directly, e.g. `/Club_Analytics?season=2024`.
 
+Club crests appear in the standings, the performance index table and the club header. They're fetched
+from ESPN's image server the first time they're needed and cached locally, not stored in the repository.
+
 The look is a dark navy theme loosely inspired by the Champions League's colours, with condensed headings
 (Barlow Condensed, from Google Fonts). It deliberately doesn't use UEFA's logos, starball or typeface:
 this is an unofficial fan project and isn't affiliated with or endorsed by UEFA. Chart colours were checked

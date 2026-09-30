@@ -15,9 +15,10 @@ requests==2.34.2
 # Validation
 pandera==0.33.1
 
-# Dashboard
+# Dashboard (Pillow shrinks the club crests)
 streamlit==1.64.0
 plotly==7.1.0
+pillow==12.3.0
 
 # Config
 python-dotenv==1.2.3

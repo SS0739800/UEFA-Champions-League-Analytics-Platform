@@ -92,6 +92,20 @@ with a clear message, and `--offline` rebuilds from the files already on disk.
   including them would make seasons hard to compare.
 - **2011-12** only has knockout games, so it's left out.
 
+### Club crests (ESPN image server)
+
+| | |
+|---|---|
+| URL | `https://a.espncdn.com/i/teamlogos/soccer/500/<espn_team_id>.png` |
+| Used in | The dashboard's standings table, performance index table and club header |
+
+Crests are the clubs' trademarks and are only shown to identify each club. They
+aren't committed to the repository. The dashboard downloads each one the first
+time it's needed, shrinks it to 64 pixels and caches it in `data/processed/crests/`
+(git-ignored). If a crest can't be fetched, that club simply shows without one.
+Player photos were considered and left out: ESPN only had them for about 1 in 8
+regular players, and they're licensed press photos.
+
 ### Calculated in this project
 
 | Table / view | What | Where |

@@ -13,6 +13,7 @@ import streamlit as st
 
 from app.components import data
 from app.components.charts import ACCENT, MUTED_MARK, SERIES, show, style
+from app.components.crests import crest_bytes
 from app.components.glossary import HELP, NO_XG
 from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
@@ -48,7 +49,13 @@ elif season_over:
 else:
     reached = f"has played in {STAGE_NAMES[furthest]} so far"
 
-st.subheader(club_name, anchor=False)
+crest = crest_bytes(data.espn_team_ids()[club_id])
+if crest:
+    crest_column, name_column = st.columns([1, 20], vertical_alignment="center")
+    crest_column.image(crest, width=44)
+    name_column.subheader(club_name, anchor=False)
+else:
+    st.subheader(club_name, anchor=False)
 st.markdown(
     f"**{season_label}:** played {len(club)}, won {wins}, drew {draws}, lost {losses}; "
     f"scored {int(club['goals_for'].sum())}, conceded {int(club['goals_against'].sum())}; {reached}."

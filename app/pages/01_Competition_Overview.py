@@ -11,6 +11,7 @@ import streamlit as st
 
 from app.components import data
 from app.components.charts import ACCENT, MUTED_MARK, SERIES, show, style
+from app.components.crests import with_crests
 from app.components.glossary import HELP
 from app.components.sidebar import PAGE_ICON, footer, page_header, season_picker
 from app.components.tables import show_table
@@ -62,10 +63,19 @@ with table_tab:
     else:
         table = standings
 
+    table = with_crests(table, data.espn_team_ids())
     show_table(table, {
-        "position": ("#", "int"), "club_name": ("Club", "text"), "played": ("P", "int"), "wins": ("W", "int"),
-        "draws": ("D", "int"), "losses": ("L", "int"), "goals_for": ("GF", "int"), "goals_against": ("GA", "int"),
-        "goal_difference": ("GD", "int"), "points": ("Pts", "int"),
+        "position": ("#", "int"),
+        "crest": ("", "image"),
+        "club_name": ("Club", "text"),
+        "played": ("P", "int"),
+        "wins": ("W", "int"),
+        "draws": ("D", "int"),
+        "losses": ("L", "int"),
+        "goals_for": ("GF", "int"),
+        "goals_against": ("GA", "int"),
+        "goal_difference": ("GD", "int"),
+        "points": ("Pts", "int"),
     }, height=min(38 * len(table) + 40, 460))
     st.caption("Worked out from results. Ties are split on goal difference then goals scored, "
                "not UEFA's full tiebreakers, so a tied position can differ from the official table.")
@@ -110,8 +120,9 @@ index = tournament_index(components, weights).merge(
 if not season_finished:
     st.caption("Stage reached isn't used yet because the season is still going.")
 
+index = with_crests(index, data.espn_team_ids())
 show_table(index, {
-    "tpi_rank": ("Rank", "int"), "club_name": ("Club", "text"), "tpi": ("Index", "signed2"),
+    "tpi_rank": ("Rank", "int"), "crest": ("", "image"), "club_name": ("Club", "text"), "tpi": ("Index", "signed2"),
     "matches": ("Games", "int"), "points_per_match": ("Pts / match", "dec2"),
     "goal_diff_per_match": ("GD / match", "signed2"), "sot_diff_per_match": ("SoT diff / match", "signed1"),
     "opponent_strength": ("Opponent Elo", "int"), "recent_form": ("Last 5 pts / match", "dec2"),

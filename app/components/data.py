@@ -80,6 +80,12 @@ def player_seasons(season_year: int) -> pd.DataFrame:
                 season_year=season_year)
 
 
+def espn_team_ids() -> dict[int, int]:
+    """Our club_id -> ESPN's team id. Crests are stored under ESPN's id."""
+    frame = load("club list", query, "SELECT club_id, espn_team_id FROM clubs")
+    return dict(zip(frame["club_id"], frame["espn_team_id"]))
+
+
 def last_checked() -> pd.Timestamp | None:
     """When the pipeline last ran successfully, whether or not it found anything new."""
     frame = load("pipeline history", query,
